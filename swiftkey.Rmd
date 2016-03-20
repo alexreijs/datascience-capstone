@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Getting started
 
-In this analysis we're going to explore the dataset of text provided by the Data Science Capstone project. The goal is to get a feeling of the data, make note of interesting observations, explore different packages and create some basic plots. Let's start by loading some libraries first.
+In this analysis we're going to explore the dataset of text provided by the Data Science Capstone project (https://www.coursera.org/specializations/jhu-data-science). The goal is to get a feeling of the data, make note of interesting observations, explore different packages and create some basic plots. Let's start by loading some libraries first.
 
 ```{r, message = F, warning = F}
 library(tm)
