@@ -118,7 +118,7 @@ createWordCloud <- function(dataFrame, n = 10, scale = c(3, 1)) {
   pal <- colorRampPalette(brewer.pal(10, "RdBu"))(n)
   
   # Generate wordcloud
-  wordcloud(words = dataFrame[1:n, 1], freq = dataFrame[1:n, 2], scale = scale, colors = pal, ordered.colors = TRUE)
+  wordcloud(words = dataFrame[1:n, 1], random.order = FALSE, freq = dataFrame[1:n, 2], scale = scale, colors = pal, ordered.colors = TRUE)
   
 }
 
