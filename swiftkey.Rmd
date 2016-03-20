@@ -1,5 +1,5 @@
 ---
-title: "Swiftkey Capstone Project"
+title: "Swiftkey Capstone Project - Exploratory Analysis"
 author: "Alexander Reijs"
 date: "March 20, 2016"
 output: html_document
@@ -53,31 +53,31 @@ Using the `tm` package we will get a corpus of text. While we are doing this we 
 corpus <- createCorpus(lines)
 ```
 
-## Exploring 1-Grams
+## Exploring unigrams
 
-Using the `RWeka` package we can easily make a tokenizer that will make an n-gram for us. After a few tweaks we are left with a usable dataframe containing the n-gram and it's frequency. Let's start by making a 1-gram dataframe.
+Using the `RWeka` package we can easily make a tokenizer that will make an n-gram for us. After a few tweaks we are left with a usable dataframe containing the n-gram and it's frequency. Let's start by making a unigram dataframe.
 
 ```{r dataFrame1Gram, cache = T}
 dataFrame1Gram <- createWekaNGramDataFrame(corpus, n = 1)
 ```
 
-Let's see how many unique words are in our 1-gram.
+Let's see how many unique words are in our unigram.
 
 ```{r}
 nrow(dataFrame1Gram)
 ```
 
-Now that we've got our dataframe, we can take a look at the 25 most occuring 1-grams and make a wordcloud using the `wordcloud` package.
+Now that we've got our dataframe, we can take a look at the 25 most occuring unigrams and make a wordcloud using the `wordcloud` package.
 
 ```{r plot1Gram, fig.width = 10}
 par(las = 2); par(mfrow = c(1, 2)); par(mar = c(4, 4, 2, 2))
-barplot(rev(dataFrame1Gram[1:25, 2]), main="Top 25 1-Grams", horiz = TRUE, names.arg = rev(dataFrame1Gram[1:25, 1]))
+barplot(rev(dataFrame1Gram[1:25, 2]), main="Top 25 unigrams", horiz = TRUE, names.arg = rev(dataFrame1Gram[1:25, 1]))
 createWordCloud(dataFrame1Gram, 100, c(2.5, 1))
 ```
 
-## Exploring 2-Grams
+## Exploring bigrams
 
-Now that we've taken a look at our 1-grams, let's step it up a bit and check out the 2-grams.
+Now that we've taken a look at our unigrams, let's step it up a bit and check out the bigrams.
 
 ```{r dataFrame2Gram, cache = T}
 dataFrame2Gram <- createWekaNGramDataFrame(corpus, n = 2)
@@ -86,14 +86,14 @@ dataFrame2Gram <- createWekaNGramDataFrame(corpus, n = 2)
 ```{r plot2Gram, fig.width = 10}
 nrow(dataFrame2Gram)
 par(las = 2); par(mfrow = c(1, 2)); par(mar = c(4, 7, 2, 2))
-barplot(rev(dataFrame2Gram[1:25, 2]), main="Top 25 2-Grams", horiz = TRUE, names.arg = rev(dataFrame2Gram[1:25, 1]))
+barplot(rev(dataFrame2Gram[1:25, 2]), main="Top 25 bigrams", horiz = TRUE, names.arg = rev(dataFrame2Gram[1:25, 1]))
 createWordCloud(dataFrame2Gram, 50, c(2.5, 1))
 ```
 
 
-## Exploring 3-Grams
+## Exploring trigrams
 
-Let's do the same for 3-grams.
+Let's do the same for trigrams.
 
 ```{r dataFrame3Gram, cache = T}
 dataFrame3Gram <- createWekaNGramDataFrame(corpus, n = 3)
@@ -102,14 +102,14 @@ dataFrame3Gram <- createWekaNGramDataFrame(corpus, n = 3)
 ```{r plot3Gram, fig.width = 10}
 nrow(dataFrame3Gram)
 par(las = 2); par(mfrow = c(1, 2)); par(mar = c(4, 12, 2, 2))
-barplot(rev(dataFrame3Gram[1:25, 2]), main="Top 25 3-Grams", horiz = TRUE, names.arg = rev(dataFrame3Gram[1:25, 1]))
+barplot(rev(dataFrame3Gram[1:25, 2]), main="Top 25 trigrams", horiz = TRUE, names.arg = rev(dataFrame3Gram[1:25, 1]))
 createWordCloud(dataFrame3Gram, 25, c(1.5, 1))
 ```
 
 
 ## Text coverage
 
-In order to find out how many unique words it takes to cover a percentage of the whole body of text, we're going to use our custom `wordsNeeded` function. This functions takes a percentage as a goal. It then loops throughs 1-grams, sorted by frequency in a descending order, calculates the accumulated percentage covered after each word and returns the number of words after reaching the specified goal. We will apply this function to a 1 to 100 percent vector. 
+In order to find out how many unique words it takes to cover a percentage of the whole body of text, we're going to use our custom `wordsNeeded` function. This functions takes a percentage as a goal. It then loops throughs unigrams, sorted by frequency in a descending order, calculates the accumulated percentage covered after each word and returns the number of words after reaching the specified goal. We will apply this function to a 1 to 100 percent vector. 
 
 ```{r wordsUsed, cache = T}
 wordsUsed <- mapply(wordsNeeded, 1:100 / 100, MoreArgs = list(data = dataFrame1Gram[, 2]))
@@ -134,3 +134,7 @@ Some of these problems were noticed during the exploratory analysis.
 - Repeating words need to be addressed better, for example "go go go".
 - So far we've been using small sample sets, scalability has not been tested yet.
 - Unsurprisingly, (removing) stopwords have a great deal of impact on the type of n-grams but also on performance.
+
+## Next steps 
+
+The next steps will be addressing some of the problems listed above and working towards a predictive model.
