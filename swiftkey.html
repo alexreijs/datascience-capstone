@@ -118,17 +118,17 @@ $(document).ready(function () {
 
 <div id="getting-started" class="section level2">
 <h2>Getting started</h2>
-<p>In this analysis we’re going to explore the dataset of text provided by the Data Science Capstone project. The goal is to get a feeling of the data, make note of interesting observations, explore different approaches and create some basic plots. Let’s start by loading some libraries first.</p>
+<p>In this analysis we’re going to explore the dataset of text provided by the Data Science Capstone project. The goal is to get a feeling of the data, make note of interesting observations, explore different packages and create some basic plots. Let’s start by loading some libraries first.</p>
 <pre class="r"><code>library(tm)
 library(RWeka)
 library(wordcloud)</code></pre>
-<p>Next, we going to include the functions used to do this analysis. They are fully specified in the appendix. We will also set a seed to ensure reproducability.</p>
+<p>Next, we’re going to include the functions we need in order to do this analysis. The code of these functions can be found on <a href="https://github.com/sjakil/datascience-capstone/blob/master/functions.R" class="uri">https://github.com/sjakil/datascience-capstone/blob/master/functions.R</a>. We will also set a seed to ensure reproducability.</p>
 <pre class="r"><code>source(&quot;functions.R&quot;)
 set.seed(12345)</code></pre>
 </div>
 <div id="getting-the-data" class="section level2">
 <h2>Getting the data</h2>
-<p>We’re going to download the course data from <a href="https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip" class="uri">https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip</a> and unzip it into the current working directory. Now that we have it available we can load it using our custom function <code>loadLines</code>. This function allows us to specify the size of a random sample of lines taken from the file. We’re getting a sample of lines of each of the three supplied english text sources and combining them into one vector.</p>
+<p>We’re going to download the course data from <a href="https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip" class="uri">https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip</a> and unzip it into the current working directory. Now that we have it available we can load it using our custom function <code>loadLines</code>. This function allows us to specify the size of a random sample of lines taken from the file. We will get a sample of lines of each of the three supplied english text sources and combine them into one vector.</p>
 <pre class="r"><code>linesTwitter &lt;- loadLines(&quot;./final/en_US/en_US.twitter.txt&quot;, randomSampleSize = 20000)</code></pre>
 <pre><code>## [1] &quot;Total number of lines loaded: 2360148 | Sample size loaded: 20000&quot;</code></pre>
 <pre class="r"><code>linesBlogs &lt;- loadLines(&quot;./final/en_US/en_US.blogs.txt&quot;, randomSampleSize = 10000)</code></pre>
@@ -139,14 +139,14 @@ set.seed(12345)</code></pre>
 </div>
 <div id="cleaning-the-data" class="section level2">
 <h2>Cleaning the data</h2>
-<p>Using the <code>tm</code> package we can a corpus of text. While we are doing this we will be doing some data cleaning as well. The following procedures seemed useful after some exploring. Most of them work pretty well, but they will probably need some reworking in the future.</p>
+<p>Using the <code>tm</code> package we will get a corpus of text. While we are doing this we will be doing some data cleaning as well. The following procedures seemed useful after some exploring. Most of them work pretty well, but they will probably need some reworking in the future.</p>
 <ul>
 <li>Converting special cases like ‘â€œ’ and ‘â€™’ back to readable characters.</li>
-<li>Removing retweets and @ mentions from tweets and removing URLs in general (domain names are a still problematic).</li>
+<li>Removing retweets and @ mentions from tweets and removing URLs in general.</li>
 <li>Removing english stopwords. Experimenting with stopword lists from different sources but using <code>stopWords(&quot;en&quot;)</code> for now.</li>
-<li>Removing punctuations. Sticking to with custom regular expressions for the moment.</li>
-<li>Converting to lowercase and stripping whitespace.</li>
-<li>Excluding profanity. Using list that supposedly came from Google.</li>
+<li>Removing punctuations. Sticking to custom regular expressions for the moment.</li>
+<li>Converting text to lowercase and stripping whitespace.</li>
+<li>Excluding profanity by using list that supposedly Google is using.</li>
 <li>Making effort to remove repeated phrases like ‘no no no’.</li>
 </ul>
 <pre class="r"><code>corpus &lt;- createCorpus(lines)</code></pre>
@@ -155,7 +155,7 @@ set.seed(12345)</code></pre>
 <h2>Exploring 1-Grams</h2>
 <p>Using the <code>RWeka</code> package we can easily make a tokenizer that will make an n-gram for us. After a few tweaks we are left with a usable dataframe containing the n-gram and it’s frequency. Let’s start by making a 1-gram dataframe.</p>
 <pre class="r"><code>dataFrame1Gram &lt;- createWekaNGramDataFrame(corpus, n = 1)</code></pre>
-<p>Lets see how many unique words are in our corpus.</p>
+<p>Let’s see how many unique words are in our 1-gram.</p>
 <pre class="r"><code>nrow(dataFrame1Gram)</code></pre>
 <pre><code>## [1] 55348</code></pre>
 <p>Now that we’ve got our dataframe, we can take a look at the 25 most occuring 1-grams and make a wordcloud using the <code>wordcloud</code> package.</p>
@@ -188,10 +188,10 @@ createWordCloud(dataFrame3Gram, 25, c(1.5, 1))</code></pre>
 </div>
 <div id="text-coverage" class="section level2">
 <h2>Text coverage</h2>
-<p>In order to find out how many unique words it takes to cover a percentage of the whole body of text, we’re going to use our custom <code>wordsNeeded</code> function. This functions takes a percentage as a goal and loops throughs the 1-grams, sorted by frequency in a descending order, calculates the accumulated percentage covered after each word and returns the number of words after reaching the specified goal. We will apply this function to a 1 to 100 percent vector.</p>
+<p>In order to find out how many unique words it takes to cover a percentage of the whole body of text, we’re going to use our custom <code>wordsNeeded</code> function. This functions takes a percentage as a goal. It then loops throughs 1-grams, sorted by frequency in a descending order, calculates the accumulated percentage covered after each word and returns the number of words after reaching the specified goal. We will apply this function to a 1 to 100 percent vector.</p>
 <pre class="r"><code>wordsUsed &lt;- mapply(wordsNeeded, 1:100 / 100, MoreArgs = list(data = dataFrame1Gram[, 2]))
 wordsUsed &lt;- round(wordsUsed / nrow(dataFrame1Gram) * 100, 2)</code></pre>
-<p>Next, we can plot this data using a simple line chart. As you can see it takes only a small percentage of words to cover up to 75% of the text, but significantly more to cover the rest.</p>
+<p>Next, we can plot this data using a simple line chart. As you can see it takes only a small percentage of words to cover up to 80% of the text, but significantly more to cover the rest.</p>
 <pre class="r"><code>plot(x = wordsUsed, y = 1:100, type = &quot;l&quot;,
      main = &quot;How many words does it take to cover the entire body of text?&quot;,
      xlab = &quot;Percentage of words used&quot;, ylab = &quot;Percentage of text covered&quot;)</code></pre>
@@ -204,8 +204,8 @@ wordsUsed &lt;- round(wordsUsed / nrow(dataFrame1Gram) * 100, 2)</code></pre>
 <li>After removing numbers some common phrases remain like “year old” or “% risk death”.</li>
 <li>Common domain names occur in high frequency, for example “amazon co uk”.</li>
 <li>Repeating words need to be addressed better, for example “go go go”.</li>
-<li>So far we’ve been using small sample sets, scalability is not tested yet.</li>
-<li>Unsurprisingly stopwords have a great deal of impact on the type of n-grams, but also on performance.</li>
+<li>So far we’ve been using small sample sets, scalability has not been tested yet.</li>
+<li>Unsurprisingly, (removing) stopwords have a great deal of impact on the type of n-grams but also on performance.</li>
 </ul>
 </div>
 
