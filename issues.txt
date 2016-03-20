@@ -1,0 +1,24 @@
+
+
+
+Repeating characters
+u u u u
+
+Removing numbers
+in the early XXs
+take place XXpm
+calories XXg protein XXg
+xx year old
+XX% risk death
+
+
+Cleaning of domain names
+amazon co uk
+
+Ideas
+  - Remove reoccuring ngram (go go go, ha ha ha)
+
+Stopwords have alot of impact
+
+
+scalability issue

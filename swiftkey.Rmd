@@ -1,0 +1,136 @@
+---
+title: "Swiftkey Capstone Project"
+author: "Alexander Reijs"
+date: "March 20, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Getting started
+
+In this analysis we're going to explore the dataset of text provided by the Data Science Capstone project. The goal is to get a feeling of the data, make note of interesting observations, explore different approaches and create some basic plots. Let's start by loading some libraries first.
+
+```{r, message = F, warning = F}
+library(tm)
+library(RWeka)
+library(wordcloud)
+```
+
+Next, we going to include the functions used to do this analysis. They are fully specified in the appendix. We will also set a seed to ensure reproducability.
+
+```{r}
+source("functions.R")
+set.seed(12345)
+```
+
+## Getting the data
+
+We're going to download the course data from https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip and unzip it into the current working directory. Now that we have it available we can load it using our custom function `loadLines`. This function allows us to specify the size of a random sample of lines taken from the file. We're getting a sample of lines of each of the three supplied english text sources and combining them into one vector.
+
+``` {r lines, cache = T, message = F, warning = F}
+linesTwitter <- loadLines("./final/en_US/en_US.twitter.txt", randomSampleSize = 20000)
+linesBlogs <- loadLines("./final/en_US/en_US.blogs.txt", randomSampleSize = 10000)
+linesNews <- loadLines("./final/en_US/en_US.news.txt", randomSampleSize = 10000)
+lines <- rbind(linesTwitter, linesBlogs, linesNews)
+```
+
+## Cleaning the data
+
+Using the `tm` package we can a corpus of text. While we are doing this we will be doing some data cleaning as well. The following procedures seemed useful after some exploring. Most of them work pretty well, but they will probably need some reworking in the future.
+
+- Converting special cases like 'â€œ' and 'â€™' back to readable characters.
+- Removing retweets and @ mentions from tweets and removing URLs in general (domain names are a still problematic).
+- Removing english stopwords. Experimenting with stopword lists from different sources but using `stopWords("en")` for now.
+- Removing punctuations. Sticking to with custom regular expressions for the moment.
+- Converting to lowercase and stripping whitespace.
+- Excluding profanity. Using list that supposedly came from Google.
+- Making effort to remove repeated phrases like 'no no no'.
+
+```{r corpus, cache = T}
+corpus <- createCorpus(lines)
+```
+
+## Exploring 1-Grams
+
+Using the `RWeka` package we can easily make a tokenizer that will make an n-gram for us. After a few tweaks we are left with a usable dataframe containing the n-gram and it's frequency. Let's start by making a 1-gram dataframe.
+
+```{r dataFrame1Gram, cache = T}
+dataFrame1Gram <- createWekaNGramDataFrame(corpus, n = 1)
+```
+
+Lets see how many unique words are in our corpus.
+
+```{r}
+nrow(dataFrame1Gram)
+```
+
+Now that we've got our dataframe, we can take a look at the 25 most occuring 1-grams and make a wordcloud using the `wordcloud` package.
+
+```{r plot1Gram, fig.width = 10}
+par(las = 2); par(mfrow = c(1, 2)); par(mar = c(4, 4, 2, 2))
+barplot(rev(dataFrame1Gram[1:25, 2]), main="Top 25 1-Grams", horiz = TRUE, names.arg = rev(dataFrame1Gram[1:25, 1]))
+createWordCloud(dataFrame1Gram, 100, c(2.5, 1))
+```
+
+## Exploring 2-Grams
+
+Now that we've taken a look at our 1-grams, let's step it up a bit and check out the 2-grams.
+
+```{r dataFrame2Gram, cache = T}
+dataFrame2Gram <- createWekaNGramDataFrame(corpus, n = 2)
+```
+
+```{r plot2Gram, fig.width = 10}
+nrow(dataFrame2Gram)
+par(las = 2); par(mfrow = c(1, 2)); par(mar = c(4, 7, 2, 2))
+barplot(rev(dataFrame2Gram[1:25, 2]), main="Top 25 2-Grams", horiz = TRUE, names.arg = rev(dataFrame2Gram[1:25, 1]))
+createWordCloud(dataFrame2Gram, 50, c(2.5, 1))
+```
+
+
+## Exploring 3-Grams
+
+Let's do the same for 3-grams.
+
+```{r dataFrame3Gram, cache = T}
+dataFrame3Gram <- createWekaNGramDataFrame(corpus, n = 3)
+```
+
+```{r plot3Gram, fig.width = 10}
+nrow(dataFrame3Gram)
+par(las = 2); par(mfrow = c(1, 2)); par(mar = c(4, 12, 2, 2))
+barplot(rev(dataFrame3Gram[1:25, 2]), main="Top 25 3-Grams", horiz = TRUE, names.arg = rev(dataFrame3Gram[1:25, 1]))
+createWordCloud(dataFrame3Gram, 25, c(1.5, 1))
+```
+
+
+## Text coverage
+
+In order to find out how many unique words it takes to cover a percentage of the whole body of text, we're going to use our custom `wordsNeeded` function. This functions takes a percentage as a goal and loops throughs the 1-grams, sorted by frequency in a descending order, calculates the accumulated percentage covered after each word and returns the number of words after reaching the specified goal. We will apply this function to a 1 to 100 percent vector. 
+
+```{r wordsUsed, cache = T}
+wordsUsed <- mapply(wordsNeeded, 1:100 / 100, MoreArgs = list(data = dataFrame1Gram[, 2]))
+wordsUsed <- round(wordsUsed / nrow(dataFrame1Gram) * 100, 2)
+```
+
+Next, we can plot this data using a simple line chart. As you can see it takes only a small percentage of words to cover up to 75% of the text, but significantly more to cover the rest.
+
+```{r plotCoverage, fig.align='center'}
+plot(x = wordsUsed, y = 1:100, type = "l",
+     main = "How many words does it take to cover the entire body of text?",
+     xlab = "Percentage of words used", ylab = "Percentage of text covered")
+```
+
+
+## Known problems and findings
+
+Some of these problems were noticed during the exploratory analysis.
+
+- After removing numbers some common phrases remain like "year old" or "% risk death".
+- Common domain names occur in high frequency, for example "amazon co uk".
+- Repeating words need to be addressed better, for example "go go go".
+- So far we've been using small sample sets, scalability is not tested yet.
+- Unsurprisingly stopwords have a great deal of impact on the type of n-grams, but also on performance.
