@@ -41,7 +41,7 @@ preProcessLines <- function(files, maxGram = 4, chunkSize = 500000) {
   
   for (f in 1:nrow(files)) {
     
-    file <- files[f]
+    file <- files[f, ]
     print(paste("Loading file:", file$location, "..."))
     lines <- loadLines(paste("./final/en_US/", file$location, sep = ""), randomSampleSize = file$randomSampleSize)
 
