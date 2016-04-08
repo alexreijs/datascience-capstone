@@ -2,17 +2,6 @@ library(data.table)
 library(quanteda)
 #library(tm)
 
-source("functions.R")
-
-linesTwitter <- loadLines("./final/en_US/en_US.twitter.txt")
-linesBlogs <- loadLines("./final/en_US/en_US.blogs.txt")
-linesNews <- loadLines("./final/en_US/en_US.news.txt")
-lines <- c(linesTwitter, linesBlogs, linesNews)
-lines <- loadLines("./final/en_US/en_US.twitter.txt")
-
-
-tables <- doPreprocessing(lines, 4, 20000)
-
 
 
 

@@ -2,17 +2,13 @@ setwd("D:/Development/Repos/datasciencecoursera/Capstone project")
 
 loadLines <- function(location, randomSampleSize = 0) {
   
-  #options(encoding = "UTF-8")
-  #options(encoding = "latin1")
-  
-  
   # Create a connection to file and read lines
   con <- file(location, "r", blocking = FALSE)
   lines <- readLines(con)   
   close(con)
   
   # Print some information
-  print(paste("Total number of lines loaded:", length(lines), "| Sample size loaded:", randomSampleSize))
+  print(ifelse(randomSampleSize == 0, paste("Total number of lines loaded:", length(lines)), paste("Sample size loaded:", randomSampleSize)))
   
   # Get a random sample of percentage if specified
   if (randomSampleSize > 0) {
@@ -39,45 +35,48 @@ sliceToken <- function(token) {
 }
 
 
-sliceTail <- function(tokenString) {
-  gsub(".+\\s+", "", tokenString)
-}
 
-sliceHead <- function(tokenString) {
-  substring(tokenString, 1, (nchar(tokenString) - nchar(sliceTail(tokenString)) - 1))
-}
-
-
-
-doPreprocessing <- function(lines, maxGram = 4, chunkSize = 50000) {
-  nrChunks <- ceiling(length(lines) / chunkSize)
-  nGramDataTables <- list(NULL)  
+preProcessLines <- function(files, maxGram = 4, chunkSize = 500000) {
+  nGramDataTables <- list()  
   
-  for (x in 1:nrChunks) {
-    ptm <- proc.time()
-    print(paste("Preprocessing chunk number:", x, "of", nrChunks))
-    corpus <- createCorpus(lines[((x-1) * chunkSize):(x*chunkSize)])
+  for (f in 1:nrow(files)) {
     
-    for (n in 1:maxGram) {
-      print(paste("Creating n-Gram", n, "..."))
-      nGramDataTable <- createQuantedaNGramDataTable(corpus, n)
+    file <- files[f]
+    print(paste("Loading file:", file$location, "..."))
+    lines <- loadLines(paste("./final/en_US/", file$location, sep = ""), randomSampleSize = file$randomSampleSize)
+
+    nrOfChunks <- ceiling(length(lines) / chunkSize)
+          
+    for (x in 1:nrOfChunks) {
+      ptm <- proc.time()
+      print(paste("Preprocessing file:", file$name, f, "of", nrow(files)))
+      print(paste("Preprocessing chunk:", x, "of", nrOfChunks))
+      print("Creating corpus ...")
+      corpus <- createCorpus(lines[((x-1) * chunkSize):(x*chunkSize)])
       
-      if (x == 1)
-        nGramDataTables[[n]] <- nGramDataTable
-      else {
-        print(paste("Merging n-Gram of size:", nrow(nGramDataTables[[n]]), "..."))
-        nGramDataTables[[n]] <- mergeSumDataTables(nGramDataTables[[n]], nGramDataTable)
+      for (n in 1:maxGram) {
+        print(paste("Creating n-Gram", n, "..."))
+        nGramDataTable <- createNGramDataTable(corpus, n)
+        
+        if (n > length(nGramDataTables))
+          nGramDataTables[[n]] <- nGramDataTable
+        else {
+          nDT1 <- nrow(nGramDataTables[[n]])
+          nDT2 <- nrow(nGramDataTable)
+          print(paste("Merging n-Gram:", round(nDT1 / nDT2, 2), "(", nDT1, "/", nDT2, ")"))
+          nGramDataTables[[n]] <- mergeSumDataTables(nGramDataTables[[n]], nGramDataTable)
+        }
       }
+      
+      print(proc.time() - ptm)
     }
-    
-    print(proc.time() - ptm)
   }
-  
+    
+  ptm <- proc.time()
   for (n in 1:maxGram) {
-    ptm <- proc.time()
     if (n > 1) {
       print(paste("Getting head and tail", n, "..."))
-      #nGramDataTables[[n]] <- nGramDataTables[[n]][frequency > 1, ]
+      nGramDataTables[[n]] <- nGramDataTables[[n]][frequency > 1, ]
       
       slices <- mapply(sliceToken, nGramDataTables[[n]]$tokens)
       heads <- slices[1, ]
@@ -89,12 +88,10 @@ doPreprocessing <- function(lines, maxGram = 4, chunkSize = 50000) {
       nGramDataTables[[n]]$tail <- tails
       setkeyv(nGramDataTables[[n]], c("tokens", "head"))
     }
-    print(proc.time() - ptm)
   }
+  print(proc.time() - ptm)
   
-  print("Gererating probabilities ...")
-  probabilities <- createProbabilities(nGramDataTables)
-  probabilities
+  nGramDataTables
   
 }
 
@@ -107,7 +104,8 @@ createCorpus <- function(lines) {
   lines <- iconv(lines, "latin1", "ASCII", sub = "")
   
   lines <- gsub("([0-9:. -]{2,3})?[0-9]{1,2} ?(a|p)( |[.])?m[.]?", "", lines)
-  lines <- gsub("[0-9]{1,} ?(g|kg|lbs|cc|sq|ft)", "", lines)
+  lines <- gsub("[0-9]{1,} ?(g|kg|lbs|cc|sq|ft|mm|m)", "", lines)
+  lines <- gsub("['\"]", "", lines)
 
   corpus(lines)
   
@@ -210,7 +208,7 @@ createCorpus_ <- function(lines) {
 
 
 
-createQuantedaNGramDataTable <- function (corpus, n) {
+createNGramDataTable <- function (corpus, n) {
   
   tokens <- tokenize(corpus,
                      concatenator = " ",
@@ -248,7 +246,7 @@ createProbabilities <- function(nGramDataTables) {
     nGramDataTableNext <- nGramDataTables[[n + 1]]
     
     dataTable <- suppressWarnings(merge(nGramDataTable, nGramDataTableNext, all.x = F, by.x = "tokens", by.y = "head"))
-    dataTable$probability <- dataTable$frequency.y / dataTable$frequency.x
+    dataTable$probability <- round(dataTable$frequency.y / dataTable$frequency.x, 4)
     
     if (n == 1)
       colnames(dataTable) <- c("tokens", "a", "b", "c", "nextWord", "probability")
@@ -267,6 +265,46 @@ createProbabilities <- function(nGramDataTables) {
 
 }
 
+
+predictNextWords <- function(input, probabilities) {
+  
+  inputTokens <- rev(unlist(strsplit(input, "\\s")))
+  nGram <- min(4, length(inputTokens))
+  backTrack <- 0
+  originalNGram <- nGram
+  nextWords <- c()
+  
+  while (nGram >= 1) {
+
+    inputNGram <- paste(rev(inputTokens[1:nGram]), collapse = " ")
+        
+    if (nGram > length(probabilities)) {
+      print(paste("Input to large, removing one word"))
+      nGram <- nGram - 1
+      originalNGram <- originalNGram - 1
+      next
+    }
+    
+    if (is.na(sum(probabilities[[nGram]][inputNGram]$probability))) {
+      print(paste("No match found, going to n-1 gram"))
+      nGram <- nGram - 1
+      next
+    }
+    else {
+      print(paste("Match found after", (originalNGram - nGram), "backtracks"))
+      
+      nextWords <- probabilities[[nGram]][inputNGram][order(-probability)]
+      
+      if (nGram < originalNGram)
+        nextWords$probability <- nextWords$probability * (0.4 ^ (originalNGram - nGram))
+      
+      break
+    }
+    
+  }
+  
+  nextWords
+}
 
 
 createWordCloud <- function(dataFrame, n = 10, scale = c(3, 1)) {
