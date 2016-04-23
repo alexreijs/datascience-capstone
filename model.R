@@ -1,6 +1,9 @@
 library(data.table)
 library(quanteda)
 
+setwd("D:/Development/Repos/datasciencecoursera/Capstone project")
+set.seed(12345)
+
 source("./functions.R")
 
 

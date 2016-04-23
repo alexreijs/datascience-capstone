@@ -1,6 +1,3 @@
-setwd("D:/Development/Repos/datasciencecoursera/Capstone project")
-set.seed(12345)
-
 loadLines <- function(location, randomSampleSize = 0, verboseLevel = 2) {
   
   if (verboseLevel >= 2)

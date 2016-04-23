@@ -1,7 +1,7 @@
 ---
-title       : 
+title       : Data Science - Capstone Project
 subtitle    : 
-author      : 
+author      : Alexander Reijs
 job         : 
 framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
 highlighter : highlight.js  # {highlight.js, prettify, highlight}
@@ -9,6 +9,7 @@ hitheme     : tomorrow      #
 widgets     : []            # {mathjax, quiz, bootstrap}
 mode        : selfcontained # {standalone, draft}
 knit        : slidify::knit2slides
+
 
 --- .class #introduction bg:white
 
@@ -29,6 +30,7 @@ Topics:
 Links:
 
 - Github: https://github.com/sjakil/datascience-capstone
+- Shiny App: https://sjakil.shinyapps.io/datascience-capstone
 
 
 
@@ -102,4 +104,4 @@ It also implements what is called stupid backoff. This means if the app could no
 
 To make the probabilities works really fast, I've used the `data.table` package and it's `setkey` function. It creates an index on a specified column and this presumably works up to a 1000x times faster compared to normal data frames.
 
-
+Link: https://sjakil.shinyapps.io/datascience-capstone
