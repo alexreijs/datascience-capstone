@@ -337,7 +337,7 @@ predictNextWords <- function(input, probabilities, verbose = F, backOff = T) {
 createWordCloud <- function(dataFrame, n = 10, scale = c(3, 1)) {
   
   # Create color palette
-  pal <- colorRampPalette(brewer.pal(10, "RdBu"))(n)
+  pal <- colorRampPalette(brewer.pal(min(n, nrow(dataFrame)), "RdBu"))(min(n, nrow(dataFrame)))
   
   # Generate wordcloud
   wordcloud(words = dataFrame[1:n, 1],
@@ -345,7 +345,8 @@ createWordCloud <- function(dataFrame, n = 10, scale = c(3, 1)) {
             freq = dataFrame[1:n, 2],
             scale = scale,
             colors = pal,
-            ordered.colors = TRUE)
+            ordered.colors = TRUE
+            )
 }
 
 wordsNeeded <- function(goal = 0.6, data) {
