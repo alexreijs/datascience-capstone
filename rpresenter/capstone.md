@@ -13,7 +13,7 @@ Introduction
 
 This project aims at providing a useful way of predicting the next word a user would most likely want to type, given an input of a string of text. This presentation explains the techniques used, but the code is available as well.
 
-Topics:
+Chapters:
 
 - Processing data
 - Prediction algorythm

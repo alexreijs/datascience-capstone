@@ -95,9 +95,9 @@ function(input, output, session) {
     output$about <- renderText({
       "<br/><h3>About</h3>
       <div style='height:60px'>This app was created by Alexander Reijs. All of the code is available at:
-      <br/><a target='_blank' href='https://github.com/sjakil/datascience-capstone'>https://github.com/sjakil/datascience-capstone</a></div>
+      <br/><a target='_blank' href='https://github.com/sjakil/datascience-capstone'>www.github.com/sjakil/datascience-capstone</a></div>
       <div style='height:60px'>A slidify presentation of this project is available at:<br/>
-      <a target='_blank' href='http://sjakil.github.io/datascience-capstone-slidify'>http://sjakil.github.io/datascience-capstone-slidify</a></div>
+      <a target='_blank' href='http://rpubs.com/sjakil/datascience-capstone'>www.rpubs.com/sjakil/datascience-capstone</a></div>
       A big thank you goes out to:
       <br/><ul><li>JHU Data Science Course: <a href='https://www.coursera.org/specializations/jhu-data-science'>www.coursera.org/specializations/jhu-data-science</a></li>
       <li>Swiftkey: <a target='_blank' href='https://www.swiftkey.com/en'>www.swiftkey.com</a></li></ul>"

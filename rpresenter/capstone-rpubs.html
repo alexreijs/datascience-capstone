@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>capstone</title>
+  <title>Data Science - Capstone Project</title>
     
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -749,7 +749,7 @@ hljs.initHighlightingOnLoad();
   <div class="slides">
 
 <section data-state="section" data-transition="linear" data-transition-speed="default">
-<h1>capstone</h1><p>Alexander Reijs<br/>2016-04-21</p>
+<h1>Data Science - Capstone Project</h1><p>Alexander Reijs<br/>2016-04-21</p>
 
 <div class="slideContent" >
 
@@ -759,9 +759,9 @@ hljs.initHighlightingOnLoad();
 <section data-transition="linear" data-transition-speed="default">
 <h3>Introduction</h3>
 <div class="slideContent" >
-<p>This project aims at providing a usable way of predicting the next word a user would most likely want to type, given an input of a string of text. This presentation explains the techniques used, but the code is available as well.</p>
+<p>This project aims at providing a useful way of predicting the next word a user would most likely want to type, given an input of a string of text. This presentation explains the techniques used, but the code is available as well.</p>
 
-<p>Topics:</p>
+<p>Chapters:</p>
 
 <ul>
 <li>Processing data</li>
@@ -791,8 +791,15 @@ hljs.initHighlightingOnLoad();
 
 <ul>
 <li>Remove time notations (xx pm/am) and unit notations (xx kg/mm/etc)</li>
-<li>Remove special encoding (ä &gt; a), Twitter (RT, @ etc), hyphens, numbers and punctuation.</li>
+<li>Remove special encoding (Ã¤ &gt; a), Twitter (RT, @ etc), hyphens, numbers and punctuation.</li>
 </ul>
+
+<pre><code>[1] &quot;Loading file: ../final/en_US/en_US.twitter.txt ...&quot;
+[1] &quot;Sample size loaded: 10000&quot;
+</code></pre>
+
+<pre><code>[1] &quot;Creating corpus ...&quot;
+</code></pre>
 
 </div>
 
@@ -815,6 +822,17 @@ hljs.initHighlightingOnLoad();
 <p>In order to test the algorythm we are going to repeat the process described before, but this time we will split the lines of text into two parts. The one part is used to train the model (80% of data), the other part is used to test the model (20% of data). After creating n-grams and probabilities for both sets, we can calculate how many our model predicts correctly.</p>
 
 <p>I&#39;ve created a function that will make doing these tests very easy. In the example below I&#39;ve used 50k lines of all three sources for up to quintgrams.</p>
+
+<pre><code class="r">accuracyTest(files, maxGram = 5, verboseLevel = 1)
+</code></pre>
+
+<pre><code>[1] &quot;Creating probabilities ...&quot;
+[1] &quot;2-Gram accuracy: 7.68&quot;
+[1] &quot;3-Gram accuracy: 27.27&quot;
+[1] &quot;4-Gram accuracy: 46.61&quot;
+[1] &quot;5-Gram accuracy: 54.37&quot;
+[1] &quot;Total accuracy: 18.57&quot;
+</code></pre>
 
 </div>
 
@@ -889,7 +907,7 @@ function commandsForSlide(indexh) {
       transition: 'linear',
       transitionSpeed: 'default',
       rtl: false,
-      width: 960,
+      width: 1440,
       height: 700,
     
       dependencies: []
