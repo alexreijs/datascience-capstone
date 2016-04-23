@@ -1,9 +1,10 @@
 setwd("D:/Development/Repos/datasciencecoursera/Capstone project")
 set.seed(12345)
 
-loadLines <- function(location, randomSampleSize = 0) {
+loadLines <- function(location, randomSampleSize = 0, verboseLevel = 2) {
   
-  print(paste("Loading file:", location, "..."))
+  if (verboseLevel >= 2)
+    print(paste("Loading file:", location, "..."))
   
   # Create a connection to file and read lines
   con <- file(location, "r", blocking = FALSE)
@@ -11,9 +12,10 @@ loadLines <- function(location, randomSampleSize = 0) {
   close(con)
   
   # Print some information
-  print(ifelse(randomSampleSize == 0,
-               paste("Total number of lines loaded:", length(lines)),
-               paste("Sample size loaded:", randomSampleSize)))
+  if (verboseLevel >= 2)
+    print(ifelse(randomSampleSize == 0,
+                 paste("Total number of lines loaded:", length(lines)),
+                 paste("Sample size loaded:", randomSampleSize)))
   
   # Get a random sample of percentage if specified
   if (randomSampleSize > 0) {
@@ -27,10 +29,12 @@ loadLines <- function(location, randomSampleSize = 0) {
   
 }
 
-mergeSumDataTables <- function(dataTable1, dataTable2, n) {
+mergeSumDataTables <- function(dataTable1, dataTable2, n, verboseLevel = 2) {
   nDT1 <- nrow(dataTable1)
   nDT2 <- nrow(dataTable2)
-  print(paste("Merging ", n, "-Gram: ", round(nDT1 / nDT2, 2), " ( ", nDT1, " / ", nDT2, " )", sep = ""))
+  
+  if (verboseLevel >= 2)
+    print(paste("Merging ", n, "-Gram: ", round(nDT1 / nDT2, 2), " ( ", nDT1, " / ", nDT2, " )", sep = ""))
   
   dataTable <- merge(dataTable1, dataTable2, all.x = T, all.y = T, by = "tokens")
   dataTable$frequency <- rowSums(dataTable[, .(frequency.x, frequency.y)], na.rm = T)
@@ -38,11 +42,11 @@ mergeSumDataTables <- function(dataTable1, dataTable2, n) {
 }
 
 
-mergeToList <- function(list1, list2, n) {
+mergeToList <- function(list1, list2, n, verboseLevel = 2) {
   if (n > length(list1))
     list1[[n]] <- list2
   else
-    list1[[n]] <- mergeSumDataTables(list1[[n]], list2, n)
+    list1[[n]] <- mergeSumDataTables(list1[[n]], list2, n, verboseLevel)
   
   list1
 }
@@ -55,13 +59,14 @@ sliceToken <- function(token) {
 }
 
 
-getHeadAndTail <- function(nGramDataTables, maxGram) {
+getHeadAndTail <- function(nGramDataTables, maxGram, verboseLevel = 2) {
   
   ptm <- proc.time()
   
   for (n in 1:maxGram) {
     if (n > 1) {
-      print(paste("Getting head and tail for ", n, " -Gram ...", sep = ""))
+      if (verboseLevel >= 2)
+        print(paste("Getting head and tail for ", n, "-Gram ...", sep = ""))
       nGramDataTables[[n]] <- nGramDataTables[[n]][frequency > 1, ]
       
       slices <- mapply(sliceToken, nGramDataTables[[n]]$tokens)
@@ -75,30 +80,34 @@ getHeadAndTail <- function(nGramDataTables, maxGram) {
       setkeyv(nGramDataTables[[n]], c("tokens", "head"))
     }
   }
-  print(proc.time() - ptm)
+  if (verboseLevel >= 2)
+    print(proc.time() - ptm)
   
   nGramDataTables
   
 }
 
 
-processLines <- function(lines, maxGram, chunkSize) {
+processLines <- function(lines, maxGram, chunkSize, verboseLevel = 2) {
   
   nGramDataTables <- list()  
   nrOfChunks <- ceiling(length(lines) / chunkSize)
   
   for (x in 1:nrOfChunks) {
     ptm <- proc.time()
-    print(paste("Processing chunk:", x, "of", nrOfChunks))
-    print("Creating corpus ...")
+    if (verboseLevel >= 2) {
+      print(paste("Processing chunk:", x, "of", nrOfChunks))
+      print("Creating corpus ...")
+    }
     corpus <- createCorpus(lines[((x-1) * chunkSize):(x * chunkSize)])
     
     for (n in 1:maxGram) {
-      print(paste("Creating ", n, "-Gram ", n, "...", sep = ""))
+      if (verboseLevel >= 2)
+        print(paste("Creating ", n, "-Gram ...", sep = ""))
       nGramDataTables <- mergeToList(nGramDataTables, createNGramDataTable(corpus, n), n)
     }
-    
-    print(proc.time() - ptm)
+    if (verboseLevel >= 2)    
+      print(proc.time() - ptm)
   }
   
   nGramDataTables
@@ -114,7 +123,7 @@ saveProbabilities <- function(files, maxGram = 4, chunkSize = 500000) {
   
   for (f in 1:nrow(files)) {
     file <- files[f, ]
-    lines <- loadLines(paste("./final/en_US/", file$location, sep = ""), randomSampleSize = file$randomSampleSize)
+    lines <- loadLines(file$location, randomSampleSize = file$randomSampleSize)
     
     print(paste("Processing file:", file$name, f, "of", nrow(files)))
     fileNGramDataTables <- processLines(lines, maxGram, chunkSize)
@@ -141,45 +150,51 @@ saveProbabilities <- function(files, maxGram = 4, chunkSize = 500000) {
 
 
 
-accuracyTest <- function(files, maxGram = 4, backOff = T, chunkSize = 500000) {
+accuracyTest <- function(files, maxGram = 4, backOff = T, chunkSize = 500000, verboseLevel = 2) {
   
   testNGramDataTables <- list()
   trainingNGramDataTables <- list()
   
   for (f in 1:nrow(files)) {
     file <- files[f, ]
-    lines <- loadLines(paste("./final/en_US/", file$location, sep = ""), randomSampleSize = file$randomSampleSize)
+    lines <- loadLines(file$location, randomSampleSize = file$randomSampleSize, verboseLevel = verboseLevel)
     
-    print("Splitting lines ...")
+    if (verboseLevel >= 2)
+      print("Splitting lines ...")
     randomLines <- sample(lines, length(lines))
     splitInt <- round(length(randomLines) * 0.8)
     trainingLines <- randomLines[1:splitInt]
     testLines <- randomLines[(splitInt + 1):length(randomLines)]
     
-    print(paste("Processing training lines:", file$name, f, "of", nrow(files)))
-    trainingNGramDataTablesNew <- processLines(trainingLines, maxGram, chunkSize)
-    print(paste("Processing test lines:", file$name, f, "of", nrow(files)))
-    testNGramDataTablesNew <- processLines(testLines, maxGram, chunkSize)
+    if (verboseLevel >= 2)
+      print(paste("Processing training lines:", file$name, f, "of", nrow(files)))
+    trainingNGramDataTablesNew <- processLines(trainingLines, maxGram, chunkSize, verboseLevel = verboseLevel)
+    if (verboseLevel >= 2)
+      print(paste("Processing test lines:", file$name, f, "of", nrow(files)))
+    testNGramDataTablesNew <- processLines(testLines, maxGram, chunkSize, verboseLevel = verboseLevel)
     
     ptm <- proc.time()
-    print("Merging n-Gram data tables ...")
+    if (verboseLevel >= 2)
+      print("Merging n-Gram data tables ...")
     
     for (n in 1:maxGram) {
-      trainingNGramDataTables <- mergeToList(trainingNGramDataTables, trainingNGramDataTablesNew[[n]], n)
-      testNGramDataTables <- mergeToList(testNGramDataTables, testNGramDataTablesNew[[n]], n)
+      trainingNGramDataTables <- mergeToList(trainingNGramDataTables, trainingNGramDataTablesNew[[n]], n, verboseLevel = verboseLevel)
+      testNGramDataTables <- mergeToList(testNGramDataTables, testNGramDataTablesNew[[n]], n, verboseLevel = verboseLevel)
     }
-    print(proc.time() - ptm)
+    if (verboseLevel >= 2)
+      print(proc.time() - ptm)
     
   }
   
-  trainingNGramDataTables <- getHeadAndTail(trainingNGramDataTables, maxGram)
-  testNGramDataTables <- getHeadAndTail(testNGramDataTables, maxGram)
+  trainingNGramDataTables <- getHeadAndTail(trainingNGramDataTables, maxGram, verboseLevel = verboseLevel)
+  testNGramDataTables <- getHeadAndTail(testNGramDataTables, maxGram, verboseLevel = verboseLevel)
   
   print("Creating probabilities ...")
   probabilities <- createProbabilities(trainingNGramDataTables)
   
   for (n in 2:maxGram) {
-    print(paste("Getting predictions for ", n, "-Gram ...", sep = ""))
+    if (verboseLevel >= 2)
+      print(paste("Getting predictions for ", n, "-Gram ...", sep = ""))
     testNGramDataTables[[n]]$prediction <- mapply(function(tokens) {
       return(predictNextWords(tokens, probabilities, backOff = backOff)[1]$nextWord)
     }, testNGramDataTables[[n]]$head)
@@ -236,7 +251,6 @@ createNGramDataTable <- function (corpus, n) {
   #tokens <- removeFeatures(tokens, readLines("./profanity.txt"))
 
   tokens <- ngrams(tokens, n = n, concatenator = " ")
-  
   
   dfm <- dfm(tokens, verbose = FALSE)
   dfreq <- docfreq(dfm)
